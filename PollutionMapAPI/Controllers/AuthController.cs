@@ -88,7 +88,7 @@ public class AuthController : ControllerBase
 
         await _authService.SaveRefreshTokenAsync(user, refreshToken, GetRequestIp());
 
-        SetRefreshTokenCookie(refreshToken);
+        // SetRefreshTokenCookie(refreshToken);
 
         return Ok(new LoginResponce() { 
             AccessToken = accessToken,
@@ -127,7 +127,7 @@ public class AuthController : ControllerBase
         await _authService.DeleteRefreshTokenAsync(user, refreshToken);
         await _authService.SaveRefreshTokenAsync(user, newRefreshToken, GetRequestIp());
 
-        SetRefreshTokenCookie(newRefreshToken);
+        // SetRefreshTokenCookie(newRefreshToken);
 
         return Ok(new RefreshResponce() { 
             AccessToken = newAccessToken, 
@@ -139,7 +139,7 @@ public class AuthController : ControllerBase
     [HttpPost("logout")]
     public async Task<ActionResult<LogoutRespone>> Logout([FromBody] LogoutRequest logoutRequest)
     {
-        var refreshToken = logoutRequest.RefreshToken ?? GetRefreshTokenFromCookie();
+        var refreshToken = logoutRequest.RefreshToken; // ?? GetRefreshTokenFromCookie()
 
         if (string.IsNullOrEmpty(refreshToken))
             return BadRequest(LogoutRespone.FromError("Token is required."));
@@ -151,7 +151,7 @@ public class AuthController : ControllerBase
         if (logoutRequest.FromAllDevices)
             await _authService.DeleteAllRefreshTokensAsync(user);
 
-        SetRefreshTokenCookie("");
+        // SetRefreshTokenCookie("");
 
         return Ok(LogoutRespone.FromSuccess("Logout successfull."));
     }

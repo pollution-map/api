@@ -58,8 +58,16 @@ builder.Services.AddSwaggerGen(c =>
     c.AddJwtBearerAuthSwaggerUI();
 });
 
+builder.Services.AddCors();
 
 var app = builder.Build();
+
+// allow all origins provided in configuration section "AllowedOrigins"
+app.UseCors(x => x
+    .WithOrigins(builder.Configuration.GetSection("AllowedOrigins").GetChildren().Select(c => c.Value).ToArray()) 
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("EnforceSwagger"))

@@ -183,7 +183,7 @@ public static class AuthSwaggerExtensions
             Type = SecuritySchemeType.Http,
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Scheme = JwtBearerDefaults.AuthenticationScheme,
+            Scheme = "bearer",
             Description = "Please insert JWT token into field"
         });
         return options;

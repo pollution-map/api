@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PollutionMapAPI.DataAccess;
-using PollutionMapAPI.Middleware;
 using PollutionMapAPI.Models;
 using PollutionMapAPI.Repositories.Core;
 using PollutionMapAPI.Services.Auth;
 using PollutionMapAPI.Services.Email;
+using PollutionMapAPI.Services.Map;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,17 +25,18 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
+    config.UseLazyLoadingProxies();
     config.UseInMemoryDatabase("TestInMemoryUsersDb");
 });
 
-builder.Services.AddIdentity<User, IdentityRole>(config =>
+builder.Services.AddIdentity<User, Role>(config =>
 {
     config.Password.RequiredLength = 6;
     config.Password.RequireDigit = false;
     config.Password.RequireNonAlphanumeric = false;
     config.Password.RequireUppercase = false;
     config.User.RequireUniqueEmail = true;
-    config.SignIn.RequireConfirmedEmail = 
+    config.SignIn.RequireConfirmedEmail =
         builder.Configuration.GetRequiredSection("Auth")
         .Get<AuthServiceSettings>().RequireConfirmedEmailToLogin;
 })
@@ -56,9 +57,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddJwtBearerAuthSwaggerUI();
+    c.IncludeXmlComments(Path.Combine(
+        AppContext.BaseDirectory,
+        $"{Assembly.GetExecutingAssembly().GetName().Name}.xml"
+    ));
 });
 
 builder.Services.AddCors();
+builder.Services.AddMapService();
 
 var app = builder.Build();
 
@@ -69,6 +75,8 @@ if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Enf
     app.UseSwaggerUI();
 }
 
+// Global error handler
+app.UseExceptionHandler("/error");
 app.UseHttpsRedirection();
 
 // allow all origins provided in configuration section "AllowedOrigins"
@@ -84,8 +92,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Global error handler
-app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.Run();

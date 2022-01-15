@@ -81,7 +81,7 @@ public class MailKitEmailConfirmationService : IEmailConfrimationService
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var emailConfirmationQuery = new QueryBuilder
         {
-            { "id", user.Id },
+            { "id", userId },
             { "confirmationToken", token }
         }.ToString();
 

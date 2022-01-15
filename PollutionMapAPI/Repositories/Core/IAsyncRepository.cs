@@ -2,10 +2,10 @@
 
 namespace PollutionMapAPI.Repositories.Core;
 
-public interface IAsyncRepository<T> where T : BaseEntity
+public interface IAsyncRepository<T, IdType> where T : BaseEntity<IdType>
 {
-    Task<T> GetByIdAsync(int id);
-    Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
+    Task<T> GetByIdAsync(IdType id);
+    Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate);
 
     Task AddAsync(T entity);
     Task UpdateAsync(T entity);

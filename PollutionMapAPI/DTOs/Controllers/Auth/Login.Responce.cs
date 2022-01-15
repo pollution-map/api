@@ -1,6 +1,8 @@
-﻿namespace PollutionMapAPI.DTOs;
+﻿using PollutionMapAPI.DTOs.Entities;
 
-public class LoginResponce : Responce
+namespace PollutionMapAPI.DTOs;
+
+public class LoginResponce
 {
     public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }

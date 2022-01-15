@@ -3,7 +3,7 @@
 /// <summary>
 /// Base entity for generic repositories
 /// </summary>
-public class BaseEntity
+public class BaseEntity<IdType>
 {
-    public int Id { get; set; }
+    public IdType Id { get; set; }
 }

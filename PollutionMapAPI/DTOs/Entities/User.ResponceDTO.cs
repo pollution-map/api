@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace PollutionMapAPI.DTOs;
+namespace PollutionMapAPI.DTOs.Entities;
 public class UserResponceDTO
 {
     public string Id { get; set; }
@@ -9,4 +9,6 @@ public class UserResponceDTO
     
     [DefaultValue(false)]
     public bool EmaiConfirmed { get; set; }
+
+    public IEnumerable<MapRefDTO> Maps { get; set; }
 }

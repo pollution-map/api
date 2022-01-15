@@ -3,11 +3,23 @@ using System.Security.Claims;
 
 namespace PollutionMapAPI.Models;
 
-public class User : IdentityUser
+public class User : IdentityUser<Guid>
 {
+    public virtual List<Map> Maps { get; set; }
+
+    public User() : base() {
+        Id = Guid.NewGuid();
+    }
 }
 
-public static class Role
+public class Role : IdentityRole<Guid> 
+{
+    public Role() : base() {
+        Id = Guid.NewGuid();
+    }
+}
+
+public static class Roles
 {
     public const string Administrator = "admin";
     public const string User = "user";

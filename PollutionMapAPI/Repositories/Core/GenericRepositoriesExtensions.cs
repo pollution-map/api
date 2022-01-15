@@ -9,6 +9,6 @@ public static class GenericRepositoriesExtensions
     /// <returns></returns>
     public static IServiceCollection AddGenericRepositories(this IServiceCollection services)
     {
-        return services.AddScoped(typeof(IAsyncRepository<>), typeof(EfRepositoryBase<>));
+        return services.AddScoped(typeof(IAsyncRepository<,>), typeof(EfRepositoryBase<,>));
     }
 }

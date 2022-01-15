@@ -2,14 +2,14 @@
 
 namespace PollutionMapAPI.Models;
 
-public class RefreshToken : BaseEntity
+public class RefreshToken : BaseEntity<long>
 {
     // Randomly generated refresh token value
     public string Token { get; set; }
     
     // Link to a user the token is given to
     public string UserId { get; set; }
-    public User User { get; set; }
+    public virtual User User { get; set; }
 
     // Token has limited lifetime 
     public DateTime HasBeenCreatedOn { get; set; }

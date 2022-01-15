@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace PollutionMapAPI.DTOs;
+﻿namespace PollutionMapAPI.DTOs;
 
 public class Responce
 {
@@ -34,17 +32,6 @@ public static class ResponceWithMessageExtensions
 
         responceDto.Message = message;
         responceDto.Success = true;
-        return responceDto;
-    }
-}
-
-public static class ResponceWithMessageIdentityExtensions
-{
-    public static Responce WithIdentityErrors(this Responce responceDto, IEnumerable<IdentityError> errors)
-    {
-        var multiLineErrorMessage = string.Join("\n", errors.Select(e => $"{e.Description}"));
-        responceDto.WithErrorMessage(multiLineErrorMessage);
-        responceDto.Success = string.IsNullOrEmpty(multiLineErrorMessage);
         return responceDto;
     }
 }

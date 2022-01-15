@@ -13,7 +13,7 @@ public interface IAuthService
     // Gets last saved refresh token for a user
     // unused in current auth implementation,
     // but can be used for single-persistent-login-session scenarios
-    Task<string> GetRefreshTokenAsync(User user);
+    Task<string?> GetRefreshTokenAsync(User user);
     Task<bool> IsRefreshTokenValid(User user, string refreshToken);
     Task DeleteRefreshTokenAsync(User user, string refreshToken);
     Task DeleteAllRefreshTokensAsync(User user);

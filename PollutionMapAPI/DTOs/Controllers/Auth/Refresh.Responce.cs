@@ -1,6 +1,6 @@
 ﻿namespace PollutionMapAPI.DTOs;
 
-public class RefreshResponce : Responce
+public class RefreshResponce
 {
     public string? AccessToken { get; set; }
 

@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace PollutionMapAPI.Repositories.Core;
 
-public class EfRepositoryBase<T> : IAsyncRepository<T> where T : BaseEntity
+public class EfRepositoryBase<T, IdType> : IAsyncRepository<T, IdType> where T : BaseEntity<IdType>
 {
     protected AppDbContext Context;
 
@@ -13,7 +13,7 @@ public class EfRepositoryBase<T> : IAsyncRepository<T> where T : BaseEntity
         Context = context;
     }
 
-    public Task<T> GetByIdAsync(int id) => Context.Set<T>().FindAsync(id).AsTask();
+    public Task<T> GetByIdAsync(IdType id) => Context.Set<T>().FindAsync(id).AsTask();
 
     public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
         => Context.Set<T>().FirstOrDefaultAsync(predicate);

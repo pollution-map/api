@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PollutionMapAPI.Controllers;
 using PollutionMapAPI.Models;
 using PollutionMapAPI.Repositories.Core;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -14,12 +15,12 @@ namespace PollutionMapAPI.Services.Auth;
 public class AuthService : IAuthService
 {
     private readonly AuthServiceSettings _settings;
-    private readonly IAsyncRepository<RefreshToken> _refreshTokenRepo;
+    private readonly IAsyncRepository<RefreshToken, long> _refreshTokenRepo;
     private readonly TokenValidationParameters _tokenValidationParameters;
 
     public AuthService(
         IConfiguration config,
-        IAsyncRepository<RefreshToken> repository, 
+        IAsyncRepository<RefreshToken, long> repository, 
         TokenValidationParameters tokenValidationParameters
     )
     {
@@ -34,7 +35,7 @@ public class AuthService : IAuthService
         {
             Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(JwtRegisteredClaimNames.Sid, user.Id),
+                    new Claim(JwtRegisteredClaimNames.Sid, user.Id.ToString()),
                     new Claim(ClaimTypes.Name, user.UserName),
                 }
             ),
@@ -80,7 +81,7 @@ public class AuthService : IAuthService
         return _refreshTokenRepo.AddAsync(new RefreshToken()
         {
             Token = refreshToken,
-            UserId = user.Id,
+            UserId = user.Id.ToString(),
             User = user,
             HasBeenCreatedOn = DateTime.UtcNow,
             WillExpireOn = DateTime.UtcNow.AddDays(_settings.RefreshTokenLivesInDays),
@@ -88,18 +89,19 @@ public class AuthService : IAuthService
         });
     }
 
-    public async Task<string> GetRefreshTokenAsync(User user)
+    public async Task<string?> GetRefreshTokenAsync(User user)
     {
         var tokenInfo = await _refreshTokenRepo.FirstOrDefaultAsync(token => 
             token.User == user
         );
-        return tokenInfo.Token;
+        return tokenInfo?.Token;
     }
 
     public async Task DeleteRefreshTokenAsync(User user, string refreshToken)
     {
         var tokenInfo = await _refreshTokenRepo.FirstOrDefaultAsync(token => token.User == user && token.Token == refreshToken);
-        await _refreshTokenRepo.RemoveAsync(tokenInfo);
+        if(tokenInfo is not null)
+            await _refreshTokenRepo.RemoveAsync(tokenInfo);
     }
 
     public async Task DeleteAllRefreshTokensAsync(User user)
@@ -165,6 +167,16 @@ public static class AuthExtensions
            {
                options.SaveToken = true;
                options.TokenValidationParameters = tokenValidationParameters;
+               options.Events = new JwtBearerEvents
+               {
+                   // async is important here 
+                   // without async, exception throw crashes the app
+                   // with async, exception throw gets handled as error message by /error contoller
+                   OnChallenge = async context =>
+                   {
+                       throw new Unauthorized401Exception("Invalid Bearer access_token or no Bearer access_token provided.");
+                   }
+               };
            });
 
         return services.AddScoped<IAuthService, AuthService>();
@@ -190,7 +202,7 @@ public static class AuthSwaggerExtensions
     }
 }
 
-// Filter to display a lock icon only on methods where authorization is required
+// Filter to display a lock icon in swagger docs only on methods where authorization is required
 public class AuthorizationOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
@@ -200,9 +212,14 @@ public class AuthorizationOperationFilter : IOperationFilter
                                 .Union(context.MethodInfo.GetCustomAttributes(true))
                                 .OfType<AuthorizeAttribute>();
 
-        if (attributes != null && attributes.Any())
+        var allowAnonymous = context.MethodInfo.DeclaringType!.GetCustomAttributes(true)
+                                .Union(context.MethodInfo.GetCustomAttributes(true))
+                                .OfType<AllowAnonymousAttribute>();
+
+        if (attributes.Any() &&!allowAnonymous.Any())
         {
             var attr = attributes.ToList()[0];
+
 
             // Add what should be show inside the security section
             var securityInfos = new List<string>

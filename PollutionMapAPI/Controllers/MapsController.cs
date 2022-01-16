@@ -9,7 +9,7 @@ using PollutionMapAPI.Models;
 using PollutionMapAPI.Services.Map;
 
 namespace PollutionMapAPI.Controllers;
-[Route("api/users/{name}/maps")]
+[Route("api/maps")]
 [ApiController]
 [Authorize]
 public class MapsController : BaseController
@@ -25,29 +25,22 @@ public class MapsController : BaseController
         _mapper = mapper;
     }
 
-    // GET: api/users/{name}/maps
+    // GET: api/maps/
     /// <summary>
     /// Get all user's maps
     /// </summary>
-    /// <param name="name">User name</param>
-    /// <response code="200">Successfully found maps</response>
-    /// <response code="403">Could not access the user from current logged in account</response>
-    /// <response code="404">Could not find the user</response>
-    
+    /// <param name="limit">Maps per page</param>
+    /// <param name="offset">Maps to skip</param>
+    /// <response code="200">Maps found</response>
+
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MapRefDTO>>> GetAll(string name)
+    public async Task<ActionResult<IEnumerable<MapRefDTO>>> GetAll(int limit = 10, int offset = 0)
     {
-        if (CurrentUserName != name)
-            throw new UserCouldNotAccess403Exception();
-
-        var user = await _userManager.FindByNameAsync(name);
-
-        if (user is null)
-            throw new NotFound404Exception("User not found");
+        var user = await _userManager.FindByNameAsync(CurrentUserName);
 
         var maps = await _mapService.GetAllMapsAsync(user);
 
-        var mapRefDtos = _mapper.Map<IEnumerable<MapRefDTO>>(maps);
+        var mapRefDtos = _mapper.Map<IEnumerable<MapRefDTO>>(maps).Skip(offset).Take(limit);
 
         return Ok(mapRefDtos);
     }
@@ -57,11 +50,11 @@ public class MapsController : BaseController
     /// Get detailed info of the map
     /// </summary>
     /// <param name="id">Id of the map you wand to get detailed info on</param>
-    /// <response code="200">Successfully found a map</response>
-    /// <response code="404">Could not find the user</response>
-    
+    /// <response code="200">Map found</response>
+    /// <response code="404">Map not found</response>
+
     [AllowAnonymous]
-    [HttpGet("/api/maps/{id}")]
+    [HttpGet("{id}")]
     public async Task<ActionResult<MapResponceDTO>> GetById(string id)
     {
         var mapId = id.ToGuidFromBase62();
@@ -78,111 +71,84 @@ public class MapsController : BaseController
         return Ok(mapReadDto);
     }
 
-    // POST api/users/{name}/maps
+    // POST api/maps
     /// <summary>
     /// Create user's map
     /// </summary>
-    /// <param name="name">User name</param>
     /// <param name="value">Properties of the new map</param>
-    /// <response code="201">Successfully created a new map</response>
-    /// <response code="403">Could not access the user from current logged in account</response>
-    /// <response code="404">Could not find the user</response>
-    /// <response code="422">Could not create such map</response>
+    /// <response code="201">Map created</response>
+    /// <response code="422">Could not create the map</response>
 
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MapResponceDTO))]
     [HttpPost]
-    public async Task<ActionResult<MapResponceDTO>> Create(string name, [FromBody] MapRequestDTO value)
+    public async Task<ActionResult<MapResponceDTO>> Create([FromBody] MapRequestDTO value)
     {
-        if (CurrentUserName != name)
-            throw new UserCouldNotAccess403Exception();
-
-        var user = await _userManager.FindByNameAsync(name);
-
-        if (user is null)
-            throw new NotFound404Exception("User not found");
+        var user = await _userManager.FindByNameAsync(CurrentUserName);
 
         var map = await _mapService.CreateMapAsync(user, value);
 
         if (map is null)
-            throw new CouldNotCreate422Exception("Map could not be created");
+            throw new CouldNotCreate422Exception("Could not create the map");
 
         var mapReadDto = _mapper.Map<MapResponceDTO>(map);
 
         return Created($"/api/maps/{mapReadDto.Id}", mapReadDto);
     }
 
-    // PUT api/users/{name}/maps/1
+    // PUT api/maps/1
     /// <summary>
     /// Update user's map
     /// </summary>
-    /// <param name="name">User name</param>
     /// <param name="id">Id of the map you want to update</param>
     /// <param name="value">New properties of the map</param>
-    /// <response code="201">Successfully created a new map</response>
-    /// <response code="403">Could not access the user from current logged in account</response>
-    /// <response code="404">Could not find the user</response>
-    /// <response code="422">Could not create such map</response>
+    /// <response code="200">Map updated</response>
+    /// <response code="404">Map not found</response>
+    /// <response code="422">Could not update the map</response>
 
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MapResponceDTO))]
     [HttpPut("{id}")]
-    public async Task<ActionResult<MapResponceDTO>> Update(
-        string name, 
+    public async Task<ActionResult<MapResponceDTO>> Update( 
         string id, 
         [FromBody] MapRequestDTO value)
     {
-        if (CurrentUserName != name)
-            throw new UserCouldNotAccess403Exception();
-
-        var user = await _userManager.FindByNameAsync(name);
-
-        if (user is null)
-            throw new NotFound404Exception("User not found");
+        var user = await _userManager.FindByNameAsync(CurrentUserName);
 
         var mapId = id.ToGuidFromBase62();
         if (mapId is null)
-            throw new CouldNotDelete422Exception("Map could not be updated");
+            throw new NotFound404Exception("Map not found");
 
         var map = await _mapService.UpdateMapAsync(user, mapId.Value, value);
 
         if (map is null)
-            throw new CouldNotUpdate422Exception("Map could not be updated");
+            throw new CouldNotUpdate422Exception("Could not update the map");
 
         var mapReadDto = _mapper.Map<MapResponceDTO>(map);
 
-        return Created($"/api/maps/{mapReadDto.Id}", mapReadDto);
+        return Ok(mapReadDto);
     }
 
-    // DELETE api/users/{name}/maps/1
+    // DELETE api/maps/1
     /// <summary>
     /// Delete user's map
     /// </summary>
-    /// <param name="name">User name</param>
     /// <param name="id">Id of the map you want to delete</param>
-    /// <response code="200">Successfully deleted the map</response>
-    /// <response code="403">Could not access the user from current logged in account</response>
-    /// <response code="404">Could not find the user</response>
-    /// <response code="422">Could not delete such map</response>
+    /// <response code="200">Map deleted</response>
+    /// <response code="404">Map not found</response>
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<Responce>> Delete(string name, string id)
+    public async Task<ActionResult<Responce>> Delete(string id)
     {
-        if (CurrentUserName != name)
-            throw new UserCouldNotAccess403Exception();
-
-        var user = await _userManager.FindByNameAsync(name);
-
-        if (user is null)
-            throw new NotFound404Exception("User not found");
+        var user = await _userManager.FindByNameAsync(CurrentUserName);
 
         var mapId = id.ToGuidFromBase62();
         if (mapId is null)
-            throw new CouldNotDelete422Exception("Map could not be deleted");
+            throw new NotFound404Exception("Map not found");
 
         var isMapDeleted = await _mapService.DeleteMapAsync(user, mapId.Value);
 
         if(!isMapDeleted)
-            throw new CouldNotDelete422Exception("Map could not be deleted");
+            throw new NotFound404Exception("Map not found");
 
-        return Ok(Responce.FromSuccess("Successfully deleted the map"));
+        return Ok(Responce.FromSuccess("Map deleted"));
     }
 }

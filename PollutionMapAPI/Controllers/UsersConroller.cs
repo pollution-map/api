@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PollutionMapAPI.DTOs.Entities;
 using PollutionMapAPI.Models;
+using PollutionMapAPI.Services.Map;
 
 namespace PollutionMapAPI.Controllers;
 [Route("api/users")]
@@ -12,34 +13,25 @@ namespace PollutionMapAPI.Controllers;
 public class UsersController : BaseController
 {
     private readonly UserManager<User> _userManager;
-    private readonly IMapper _autoMapper;
+    private readonly IMapper _mapper;
 
-    public UsersController(UserManager<User> userManager, IMapper autoMapper)
+    public UsersController(UserManager<User> userManager, IMapService mapService, IMapper mapper)
     {
         _userManager = userManager;
-        _autoMapper = autoMapper;
+        _mapper = mapper;
     }
 
+    /// <summary>Get current authenticated user</summary>
+    /// <response code="200">User found</response>
 
-    /// <summary>Get user by name</summary>
-    /// <response code="200">User found.</response>
-    /// <response code="403">Could not access the user from current logged in account</response>
-    /// <response code="404">User not found.</response>
-
-    [HttpGet("{name}")]
-    public async Task<ActionResult<UserResponceDTO>> GetUser(string name)
+    [HttpGet("me")]
+    public async Task<ActionResult<UserResponceDTO>> GetCurrentUser()
     {
-        if (CurrentUserName != name)
-            throw new UserCouldNotAccess403Exception();
+        var user = await _userManager.FindByNameAsync(CurrentUserName);
 
-        var user = await _userManager.FindByNameAsync(name);
-        if (user is null)
-            throw new NotFound404Exception("User not found.");
-
-        return Ok(_autoMapper.Map<UserResponceDTO>(user));
+        return Ok(_mapper.Map<UserResponceDTO>(user));
     }
 }
-
 
 public class UserCouldNotAccess403Exception : Forbidden403Exception
 {

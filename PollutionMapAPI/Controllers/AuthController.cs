@@ -73,22 +73,7 @@ public class AuthController : ControllerBase
     /// <summary> Login to get Access_Token and Refresh_Token</summary>
     /// <remarks>
     /// Generate Refresh-Access token pair for JWT Bearer Authentication. 
-    /// You may want to confirm email before login. 
-    /// <br/>
-    /// You should avoid using this end-point for getting new Access_Tokens if you allready got one.
-    /// <br/>
-    /// Each Login should be perfromed successfuly once per user device session and end up with Logout or Refresh_Token expiration.
-    /// <br/>
-    /// Usage of login should look like this
-    /// 
-    ///     PC: Login ---> ....refresh... ...refresh... ---> Logout
-    ///     Mobile: Login ---> ....refresh... ...refresh... ...refresh... ---> Logout
-    /// 
-    /// NOT like this
-    /// 
-    ///     PC: Login ---> Login ---> Login ---> Login
-    /// 
-    /// If you need to get new Access_Token use your Refresh_Token to refresh it using /refesh endpoint.
+    /// You may want to confirm email before login.
     /// </remarks>
     /// <param name="loginRequest">Login and Password. Login is Username or Email.</param>
     /// <response code="200">Successfully logged in</response>

@@ -1,4 +1,7 @@
-﻿namespace PollutionMapAPI.Repositories.Core;
+﻿using PollutionMapAPI.Data.Repositories;
+using PollutionMapAPI.Data.Repositories.Interfaces;
+
+namespace PollutionMapAPI.Helpers;
 
 public static class GenericRepositoriesExtensions
 {
@@ -9,6 +12,6 @@ public static class GenericRepositoriesExtensions
     /// <returns></returns>
     public static IServiceCollection AddGenericRepositories(this IServiceCollection services)
     {
-        return services.AddScoped(typeof(IAsyncRepository<,>), typeof(EfRepositoryBase<,>));
+        return services.AddTransient(typeof(IGenericRepository<,>), typeof(EfRepositoryBase<,>));
     }
 }

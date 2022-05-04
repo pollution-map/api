@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using PollutionMapAPI.Data.Entities;
 using PollutionMapAPI.DataAccess;
-using PollutionMapAPI.Models;
-using PollutionMapAPI.Repositories.Core;
+using PollutionMapAPI.Helpers;
 using PollutionMapAPI.Services.Auth;
+using PollutionMapAPI.Services.Dataset;
 using PollutionMapAPI.Services.Email;
 using PollutionMapAPI.Services.Map;
 using System.Reflection;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +23,17 @@ if (!string.IsNullOrEmpty(port) && int.TryParse(port, out var portInt))
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options => {
+    options.JsonSerializerOptions.Converters.Add(new NetTopologySuite.IO.Converters.GeoJsonConverterFactory());
+
+    // serialize enums as strings in api responses
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
     config.UseLazyLoadingProxies();
+    //config.UseNpgsql(builder.Configuration.GetConnectionString("DbConnection"), x => x.UseNetTopologySuite());
     config.UseInMemoryDatabase("TestInMemoryUsersDb");
 });
 
@@ -44,6 +52,7 @@ builder.Services.AddIdentity<User, Role>(config =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddGenericRepositories();
+builder.Services.AddUnitOfWork();
 builder.Services.AddAutoMapper(config =>
 {
     config.AddMaps(Assembly.GetExecutingAssembly());
@@ -65,6 +74,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddCors();
 builder.Services.AddMapService();
+builder.Services.AddDatasetService();
 
 var app = builder.Build();
 

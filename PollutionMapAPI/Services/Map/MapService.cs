@@ -1,69 +1,87 @@
 ﻿using AutoMapper;
 using PollutionMapAPI.DTOs.Entities;
-using PollutionMapAPI.Models;
-using PollutionMapAPI.Repositories.Core;
+using PollutionMapAPI.Repositories;
+using PollutionMapAPI.Services.Dataset;
 
 namespace PollutionMapAPI.Services.Map;
 
 public class MapService : IMapService
 {
-    private readonly IAsyncRepository<Models.Map, Guid> _mapRepo;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public MapService(IAsyncRepository<Models.Map, Guid> mapRepo, IMapper mapper)
+    public MapService(IUnitOfWork unitOfWork, IMapper mapper)
     {
-        _mapRepo = mapRepo;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
-    public async Task<Models.Map?> CreateMapAsync(User user, MapRequestDTO value)
+    public async Task<Data.Entities.Map?> CreateMapAsync(Guid userId, MapRequestDTO value)
     {
-        var map = _mapper.Map<Models.Map>(value);
-        map.User = user;
-        map.UserId = user.Id;
+        var map = _mapper.Map<Data.Entities.Map>(value);
+        map.UserId = userId;
 
-        await _mapRepo.AddAsync(map);
+        // Create empty dataset according to the schema
+        var dataset = new Data.Entities.Dataset() { Map = map };
+        var schema = DatasetSchema.Empty;
+        var properties = schema.ToList();
+        foreach (var property in properties)
+        {
+            property.DataSet = dataset;
+            property.DataSetId = dataset.Id;
+        }
+        dataset.Properties = properties;
+        dataset.Items = new List<Data.Entities.DatasetItem>();
+
+        map.Dataset = dataset;
+        map.DatasetId = dataset.Id;
+
+        _unitOfWork.DatasetRepository.Add(dataset);
+        _unitOfWork.MapRepository.Add(map);
+        await _unitOfWork.SaveChangesAsync();
 
         return map;
     }
 
-    public Task<Models.Map?> GetMapByIdAsync(Guid mapId)
+    public Task<Data.Entities.Map?> GetMapByIdAsync(Guid mapId)
     {
-        return _mapRepo.FirstOrDefaultAsync(x => x.Id == mapId);
+        return _unitOfWork.MapRepository.FirstOrDefaultAsync(x => x.Id == mapId);
     }
 
-    private Task<Models.Map?> GetMapByIdAsync(Guid mapId, User user)
+    private Task<Data.Entities.Map?> GetMapByIdAsync(Guid mapId, Guid userId)
     {
-        return _mapRepo.FirstOrDefaultAsync(x => x.Id == mapId && x.User.Id == user.Id);
+        return _unitOfWork.MapRepository.FirstOrDefaultAsync(x => x.Id == mapId && x.User.Id == userId);
     }
 
-    public async Task<Models.Map?> UpdateMapAsync(User user, Guid mapId, MapRequestDTO value)
+    public async Task<Data.Entities.Map?> UpdateMapAsync(Guid userId, Guid mapId, MapRequestDTO value)
     {
-        var savedMap = await GetMapByIdAsync(mapId, user);
+        var savedMap = await GetMapByIdAsync(mapId, userId);
         if(savedMap == null)
             return null;
 
         var updatedMap = _mapper.Map(value, savedMap);
 
-        await _mapRepo.UpdateAsync(updatedMap);
+        _unitOfWork.MapRepository.Update(updatedMap);
+        await _unitOfWork.SaveChangesAsync();
 
         return updatedMap;
     }
 
-    public async Task<bool> DeleteMapAsync(User user, Guid mapId)
+    public async Task<bool> DeleteMapAsync(Guid userId, Guid mapId)
     {
-        var savedMap = await GetMapByIdAsync(mapId, user);
+        var savedMap = await GetMapByIdAsync(mapId, userId);
         if (savedMap == null)
             return false;
 
-        await _mapRepo.RemoveAsync(savedMap);
+        _unitOfWork.MapRepository.Remove(savedMap);
+        await _unitOfWork.SaveChangesAsync();
 
         return true;
     }
 
-    public Task<IEnumerable<Models.Map>> GetAllMapsAsync(User user)
+    public Task<IEnumerable<Data.Entities.Map>> GetAllMapsAsync(Guid userId)
     {
-        return _mapRepo.GetWhereAsync(x => x.User == user);
+        return _unitOfWork.MapRepository.GetWhereAsync(x => x.UserId == userId);
     }
 }
 

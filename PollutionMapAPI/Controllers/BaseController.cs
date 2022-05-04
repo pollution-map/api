@@ -6,7 +6,18 @@ namespace PollutionMapAPI.Controllers;
 
 public abstract class BaseController : ControllerBase
 {
-    public string? CurrentUserId => this.User.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
+    public Guid? CurrentUserId
+    {
+        get
+        {
+            var userId = this.User.FindFirst(JwtRegisteredClaimNames.Sid)?.Value;
+
+            if (userId is null)
+                return null;
+            else
+                return new Guid(userId);
+        }
+    }
 
     public string? CurrentUserName => this.User.FindFirst(ClaimTypes.Name)?.Value;
 }

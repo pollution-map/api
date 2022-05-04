@@ -1,6 +1,4 @@
-﻿using PollutionMapAPI.Repositories.Core;
-
-namespace PollutionMapAPI.Models;
+﻿namespace PollutionMapAPI.Data.Entities;
 
 public class RefreshToken : BaseEntity<long>
 {
@@ -8,7 +6,7 @@ public class RefreshToken : BaseEntity<long>
     public string Token { get; set; }
     
     // Link to a user the token is given to
-    public string UserId { get; set; }
+    public Guid UserId { get; set; }
     public virtual User User { get; set; }
 
     // Token has limited lifetime 

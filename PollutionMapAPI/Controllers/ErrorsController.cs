@@ -43,7 +43,7 @@ public abstract class ExpectedException : Exception
     public ExpectedException(string? message) : base(message)
     {
     }
-    
+
     public override string StackTrace
     {
         // Expected exceptions should not have stack trace to prevent exposing internal app structure
@@ -100,7 +100,7 @@ public class ErrorResponse
         {
             StackTrace = "Expected error occurred no stack trace is shown.";
         }
-            
+
         else
             StackTrace = ex.ToString();
     }

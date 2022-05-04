@@ -1,4 +1,4 @@
-﻿using PollutionMapAPI.Models;
+﻿using PollutionMapAPI.Data.Entities;
 using System.Security.Claims;
 
 namespace PollutionMapAPI.Services.Auth;

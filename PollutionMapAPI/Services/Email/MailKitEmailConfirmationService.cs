@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using NETCore.MailKit.Core;
 using NETCore.MailKit.Extensions;
 using NETCore.MailKit.Infrastructure.Internal;
-using PollutionMapAPI.Models;
+using PollutionMapAPI.Data.Entities;
 
 namespace PollutionMapAPI.Services.Email;
 

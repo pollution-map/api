@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using PollutionMapAPI.Data.Entities;
 using PollutionMapAPI.DTOs.Entities;
-using PollutionMapAPI.Models;
 using PollutionMapAPI.Services.Map;
 
 namespace PollutionMapAPI.Controllers;

@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PollutionMapAPI.DTOs;
 using PollutionMapAPI.DTOs.Entities;
 using PollutionMapAPI.Helpers;
-using PollutionMapAPI.Models;
 using PollutionMapAPI.Services.Map;
 
 namespace PollutionMapAPI.Controllers;
@@ -15,13 +13,13 @@ namespace PollutionMapAPI.Controllers;
 public class MapsController : BaseController
 {
     private readonly IMapService _mapService;
-    private readonly UserManager<User> _userManager;
     private readonly IMapper _mapper;
 
-    public MapsController(IMapService mapService, UserManager<User> userManager, IMapper mapper)
+    public MapsController(
+        IMapService mapService, 
+        IMapper mapper)
     {
         _mapService = mapService;
-        _userManager = userManager;
         _mapper = mapper;
     }
 
@@ -36,9 +34,7 @@ public class MapsController : BaseController
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MapRefDTO>>> GetAll(int limit = 10, int offset = 0)
     {
-        var user = await _userManager.FindByNameAsync(CurrentUserName);
-
-        var maps = await _mapService.GetAllMapsAsync(user);
+        var maps = await _mapService.GetAllMapsAsync(CurrentUserId.Value);
 
         var mapRefDtos = _mapper.Map<IEnumerable<MapRefDTO>>(maps).Skip(offset).Take(limit);
 
@@ -55,7 +51,7 @@ public class MapsController : BaseController
 
     [AllowAnonymous]
     [HttpGet("{id}")]
-    public async Task<ActionResult<MapResponceDTO>> GetById(string id)
+    public async Task<ActionResult<MapResponceDTO>> GetMapById(string id)
     {
         var mapId = id.ToGuidFromBase62();
         if (mapId is null)
@@ -83,9 +79,7 @@ public class MapsController : BaseController
     [HttpPost]
     public async Task<ActionResult<MapResponceDTO>> Create([FromBody] MapRequestDTO value)
     {
-        var user = await _userManager.FindByNameAsync(CurrentUserName);
-
-        var map = await _mapService.CreateMapAsync(user, value);
+        var map = await _mapService.CreateMapAsync(CurrentUserId.Value, value);
 
         if (map is null)
             throw new CouldNotCreate422Exception("Could not create the map");
@@ -111,13 +105,11 @@ public class MapsController : BaseController
         string id, 
         [FromBody] MapRequestDTO value)
     {
-        var user = await _userManager.FindByNameAsync(CurrentUserName);
-
         var mapId = id.ToGuidFromBase62();
         if (mapId is null)
             throw new NotFound404Exception("Map not found");
 
-        var map = await _mapService.UpdateMapAsync(user, mapId.Value, value);
+        var map = await _mapService.UpdateMapAsync(CurrentUserId.Value, mapId.Value, value);
 
         if (map is null)
             throw new CouldNotUpdate422Exception("Could not update the map");
@@ -138,13 +130,11 @@ public class MapsController : BaseController
     [HttpDelete("{id}")]
     public async Task<ActionResult<Responce>> Delete(string id)
     {
-        var user = await _userManager.FindByNameAsync(CurrentUserName);
-
         var mapId = id.ToGuidFromBase62();
         if (mapId is null)
             throw new NotFound404Exception("Map not found");
 
-        var isMapDeleted = await _mapService.DeleteMapAsync(user, mapId.Value);
+        var isMapDeleted = await _mapService.DeleteMapAsync(CurrentUserId.Value, mapId.Value);
 
         if(!isMapDeleted)
             throw new NotFound404Exception("Map not found");

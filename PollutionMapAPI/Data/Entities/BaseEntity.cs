@@ -1,9 +1,9 @@
-﻿namespace PollutionMapAPI.Repositories.Core;
+﻿namespace PollutionMapAPI.Data.Entities;
 
 /// <summary>
 /// Base entity for generic repositories
 /// </summary>
-public class BaseEntity<IdType>
+public abstract class BaseEntity<IdType>
 {
     public IdType Id { get; set; }
 }

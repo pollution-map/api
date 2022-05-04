@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PollutionMapAPI.Controllers;
-using PollutionMapAPI.Models;
-using PollutionMapAPI.Repositories.Core;
+using PollutionMapAPI.Data.Entities;
+using PollutionMapAPI.Repositories;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,17 +15,17 @@ namespace PollutionMapAPI.Services.Auth;
 public class AuthService : IAuthService
 {
     private readonly AuthServiceSettings _settings;
-    private readonly IAsyncRepository<RefreshToken, long> _refreshTokenRepo;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly TokenValidationParameters _tokenValidationParameters;
 
     public AuthService(
         IConfiguration config,
-        IAsyncRepository<RefreshToken, long> repository, 
+        IUnitOfWork unitOfWork, 
         TokenValidationParameters tokenValidationParameters
     )
     {
         _settings = config.GetRequiredSection("Auth").Get<AuthServiceSettings>();
-        _refreshTokenRepo = repository;
+        _unitOfWork = unitOfWork;
         _tokenValidationParameters = tokenValidationParameters;
     }
 
@@ -78,20 +78,22 @@ public class AuthService : IAuthService
 
     public Task SaveRefreshTokenAsync(User user, string refreshToken, string ip)
     {
-        return _refreshTokenRepo.AddAsync(new RefreshToken()
+        _unitOfWork.RefreshTokenRepository.Add(new RefreshToken()
         {
             Token = refreshToken,
-            UserId = user.Id.ToString(),
+            UserId = user.Id,
             User = user,
             HasBeenCreatedOn = DateTime.UtcNow,
             WillExpireOn = DateTime.UtcNow.AddDays(_settings.RefreshTokenLivesInDays),
             Ip = ip,
         });
+
+        return _unitOfWork.SaveChangesAsync();
     }
 
     public async Task<string?> GetRefreshTokenAsync(User user)
     {
-        var tokenInfo = await _refreshTokenRepo.FirstOrDefaultAsync(token => 
+        var tokenInfo = await _unitOfWork.RefreshTokenRepository.FirstOrDefaultAsync(token => 
             token.User == user
         );
         return tokenInfo?.Token;
@@ -99,16 +101,23 @@ public class AuthService : IAuthService
 
     public async Task DeleteRefreshTokenAsync(User user, string refreshToken)
     {
-        var tokenInfo = await _refreshTokenRepo.FirstOrDefaultAsync(token => token.User == user && token.Token == refreshToken);
+        var tokenInfo = await _unitOfWork.RefreshTokenRepository
+            .FirstOrDefaultAsync(token => token.User == user && token.Token == refreshToken);
         if(tokenInfo is not null)
-            await _refreshTokenRepo.RemoveAsync(tokenInfo);
+            _unitOfWork.RefreshTokenRepository.Remove(tokenInfo);
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task DeleteAllRefreshTokensAsync(User user)
     {
-        var tokensInfo = await _refreshTokenRepo.GetWhereAsync(token => token.User == user);
-        var removeTokens = tokensInfo.Select(token => _refreshTokenRepo.RemoveAsync(token));
-        await Task.WhenAll(removeTokens);
+        var tokensInfo = await _unitOfWork.RefreshTokenRepository.GetWhereAsync(token => token.User == user);
+        foreach (var token in tokensInfo)
+        {
+            _unitOfWork.RefreshTokenRepository.Remove(token);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public static SymmetricSecurityKey MakeSecretKey(AuthServiceSettings settings)
@@ -118,10 +127,11 @@ public class AuthService : IAuthService
 
     public async Task<bool> IsRefreshTokenValid(User user, string refreshToken)
     {
-        var storedRefreshTokenInfo = await _refreshTokenRepo.FirstOrDefaultAsync(token =>
-            token.User == user
-            && token.Token == refreshToken
-        );
+        var storedRefreshTokenInfo = await _unitOfWork
+            .RefreshTokenRepository.FirstOrDefaultAsync(token =>
+                token.User == user
+                && token.Token == refreshToken
+            );
 
         if (storedRefreshTokenInfo is null) return false;
         if (storedRefreshTokenInfo.HasExpired()) return false;
@@ -179,7 +189,7 @@ public static class AuthExtensions
                };
            });
 
-        return services.AddScoped<IAuthService, AuthService>();
+        return services.AddTransient<IAuthService, AuthService>();
     }
 }
 

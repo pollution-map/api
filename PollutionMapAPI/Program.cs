@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using PollutionMapAPI.Data.Entities;
 using PollutionMapAPI.DataAccess;
 using PollutionMapAPI.Helpers;
@@ -33,8 +34,14 @@ builder.Services.AddControllers().AddJsonOptions(options => {
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
     config.UseLazyLoadingProxies();
-    //config.UseNpgsql(builder.Configuration.GetConnectionString("DbConnection"), x => x.UseNetTopologySuite());
-    config.UseInMemoryDatabase("TestInMemoryUsersDb");
+    var connectionString = 
+        builder.Configuration.GetConnectionString("DbConnection") ?? 
+        HerokuHelper.GetPostgersConnectionString();
+
+    if (string.IsNullOrEmpty(connectionString))
+        config.UseInMemoryDatabase("TestInMemoryUsersDb");
+    else 
+        config.UseNpgsql(connectionString, x => x.UseNetTopologySuite());
 });
 
 builder.Services.AddIdentity<User, Role>(config =>

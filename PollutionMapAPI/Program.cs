@@ -31,13 +31,13 @@ builder.Services.AddControllers().AddJsonOptions(options => {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
+var connectionString =
+    builder.Configuration.GetConnectionString("DbConnection") ??
+    HerokuHelper.GetPostgersConnectionString();
+
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
     config.UseLazyLoadingProxies();
-    var connectionString = 
-        builder.Configuration.GetConnectionString("DbConnection") ?? 
-        HerokuHelper.GetPostgersConnectionString();
-
     if (string.IsNullOrEmpty(connectionString))
         config.UseInMemoryDatabase("TestInMemoryUsersDb");
     else 
@@ -84,6 +84,10 @@ builder.Services.AddMapService();
 builder.Services.AddDatasetService();
 
 var app = builder.Build();
+
+// Migrate database to latest version on start if needed
+if(!string.IsNullOrEmpty(connectionString) && builder.Configuration.GetValue<bool>("MigrateDatabaseOnAppStart"))
+    app.Services.MigrateDatabase<AppDbContext>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("EnforceSwagger"))

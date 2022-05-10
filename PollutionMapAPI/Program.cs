@@ -35,6 +35,11 @@ var connectionString =
     builder.Configuration.GetConnectionString("DbConnection") ??
     HerokuHelper.GetPostgersConnectionString();
 
+if (builder.Configuration.GetValue<bool>("UseInMemoryDb"))
+{
+    connectionString = "";
+}
+
 builder.Services.AddDbContext<AppDbContext>(config =>
 {
     config.UseLazyLoadingProxies();

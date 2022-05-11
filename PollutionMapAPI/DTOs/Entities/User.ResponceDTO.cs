@@ -8,7 +8,7 @@ public class UserResponceDTO
     public string Email { get; set; }
     
     [DefaultValue(false)]
-    public bool EmaiConfirmed { get; set; }
+    public bool EmailConfirmed { get; set; }
 
     public IEnumerable<MapRefDTO> Maps { get; set; }
 }

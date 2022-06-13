@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using PollutionMapAPI.Data.Entities;
 using PollutionMapAPI.DTOs.Entities;
 using PollutionMapAPI.Repositories;
 using PollutionMapAPI.Services.Dataset;
@@ -31,11 +32,20 @@ public class MapService : IMapService
             property.DataSetId = dataset.Id;
         }
         dataset.Properties = properties;
-        dataset.Items = new List<Data.Entities.DatasetItem>();
+        dataset.Items = new List<DatasetItem>();
 
         map.Dataset = dataset;
         map.DatasetId = dataset.Id;
 
+        // Create new map ui
+        var mapUi = new Data.Entities.UI() { 
+            Map = map, 
+            Elements = new() 
+        };
+
+        map.UI = mapUi;
+
+        _unitOfWork.UIRepository.Add(mapUi);
         _unitOfWork.DatasetRepository.Add(dataset);
         _unitOfWork.MapRepository.Add(map);
         await _unitOfWork.SaveChangesAsync();
@@ -73,7 +83,10 @@ public class MapService : IMapService
         if (savedMap == null)
             return false;
 
+        _unitOfWork.DatasetRepository.Remove(savedMap.Dataset);
+        _unitOfWork.UIRepository.Remove(savedMap.UI);
         _unitOfWork.MapRepository.Remove(savedMap);
+
         await _unitOfWork.SaveChangesAsync();
 
         return true;

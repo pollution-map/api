@@ -1,5 +1,4 @@
-﻿using PollutionMapAPI.Data.Entities;
-using PollutionMapAPI.DTOs.Entities;
+﻿using PollutionMapAPI.DTOs.Entities;
 
 namespace PollutionMapAPI.Services.Map;
 

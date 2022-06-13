@@ -7,4 +7,6 @@ public class MapRefDTO
     public string Name { get; set; }
 
     public DatasetRefDTO Dataset { get; set; }
+    
+    public UIRefDTO UI { get; set; }
 }

@@ -18,7 +18,7 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
 
     public DbSet<DatasetPropertyValue> DatasetsPropertiesValues { get; set; }
 
-    public DbSet<MapUI> MapUIs { get; set; }
+    public DbSet<UI> UIs { get; set; }
 
     public DbSet<UIElement> UIElements { get; set; }
 
@@ -28,10 +28,29 @@ public class AppDbContext : IdentityDbContext<User, Role, Guid>
     {
         base.OnModelCreating(builder);
 
+        // Map <-> Dataset one to one
         builder.Entity<Map>()
             .HasOne(a => a.Dataset)
             .WithOne(b => b.Map)
             .HasForeignKey<Dataset>(b => b.MapId);
+
+        // Map <-> MapUI one to one
+        builder.Entity<Map>()
+            .HasOne(a => a.UI)
+            .WithOne(b => b.Map)
+            .HasForeignKey<UI>(b => b.MapId);
+
+        // DatasetItem <-> DatasetPropertyValue one to many
+        builder.Entity<DatasetPropertyValue>()
+            .HasOne(p => p.DatasetItem)
+            .WithMany(b => b.PropertiesValues)
+            .HasForeignKey(w => w.DatasetItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Names of properties in a single dataset should not be repeated
+        builder.Entity<DatasetProperty>()
+            .HasIndex(e => new { e.DataSetId, e.PropertyName })
+            .IsUnique(true);
 
         builder.HasPostgresExtension("postgis");
     }

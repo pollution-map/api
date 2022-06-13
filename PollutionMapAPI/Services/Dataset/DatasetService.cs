@@ -18,7 +18,7 @@ public class DatasetService : IDatasetService
     public async Task<Data.Entities.Dataset?> GetDatasetByIdAsync(Guid userId, Guid datasetId)
     {
         var containingMap = await _unitOfWork.MapRepository.FirstOrDefaultAsync(map => map.DatasetId == datasetId);
-        if (containingMap is null)
+        if (containingMap is null || containingMap.UserId != userId)
             // user has no access to the dataset
             return null;
 

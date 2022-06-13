@@ -6,4 +6,5 @@ public class DatasetProperty : BaseEntity<long>
     public DatasetPropertyType PropertyType { get; set; }
     public Guid DataSetId { get; set; }
     public virtual Dataset DataSet { get; set; }
+    public virtual List<UIElement> UIElements { get; set; }
 }

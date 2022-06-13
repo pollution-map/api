@@ -8,6 +8,7 @@ using PollutionMapAPI.Services.Auth;
 using PollutionMapAPI.Services.Dataset;
 using PollutionMapAPI.Services.Email;
 using PollutionMapAPI.Services.Map;
+using PollutionMapAPI.Services.UI;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -87,6 +88,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddCors();
 builder.Services.AddMapService();
 builder.Services.AddDatasetService();
+builder.Services.AddUIService();
 
 var app = builder.Build();
 

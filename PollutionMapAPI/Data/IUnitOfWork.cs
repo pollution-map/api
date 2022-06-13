@@ -10,7 +10,12 @@ public interface IUnitOfWork : IDisposable
 
     IDatasetRepository DatasetRepository { get; }
 
+    IDatasetPropertyRepository DatasetPropertyRepository { get; }
+
     IDatasetItemRepository DatasetItemRepository { get; }
 
+    IUIRepository UIRepository { get; }
+
+    IUIElementRepository UIElementRepository { get; }
     Task SaveChangesAsync();
 }

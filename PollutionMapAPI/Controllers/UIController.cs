@@ -114,14 +114,14 @@ public class UIController : BaseController
         return _mapper.Map<UIElementResponceDTO>(uiElement);
     }
 
-    // PUT api/ui/elements/1
+    // POST api/ui/elements/1
     /// <summary>
     /// Update UI element
     /// </summary>
     /// <param name="id">Id of the UI element</param>
     /// <param name="value">New properties of the UI element</param>
     /// <response code="404">UI element not found</response>
-    [HttpPut("elements/{id}")]
+    [HttpPost("elements/{id}")]
     public async Task<ActionResult<UIElementResponceDTO>> UpdateUIElement(string id, [FromBody] UIElementRequestDTO value)
     {
         var uiElementID = id.ToGuidFromBase62();
